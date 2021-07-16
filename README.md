@@ -2,7 +2,7 @@
 An open source dynamic agent Library
 
 
-Android端实现在 https://github.com/xuehuiniaoyu/actor-demo
+Android Hello World: https://github.com/xuehuiniaoyu/actor-demo
 
 
 class Entity1(val name: String)
