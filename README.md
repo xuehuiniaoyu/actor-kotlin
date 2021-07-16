@@ -1,6 +1,10 @@
 # actor-kotlin
 An open source dynamic agent Library
 
+
+Android端实现在 https://github.com/xuehuiniaoyu/actor-demo
+
+
 class Entity1(val name: String)
     class Entity2(val name: String)
 
