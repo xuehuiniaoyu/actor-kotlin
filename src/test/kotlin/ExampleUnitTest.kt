@@ -5,30 +5,50 @@ import org.actor.MappingStrategy
 import org.junit.Test
 
 class ExampleUnitTest {
+    class ApplicationEntity1(val name: String)
+    class ApplicationEntity2(val name: String)
+    class MyEntity1(val name: String)
+    class MyEntity2(val name: String)
+
     class Entity1(val name: String)
     class Entity2(val name: String)
+
 
     class ApplicationBean {
         fun build(entity: Entity1) {
             println("my entity is ${entity.name}")
+        }
+
+        fun testMultiparameter(entity1: ApplicationEntity1, entity2: ApplicationEntity2) {
+            println("--------------------${entity1.name}")
         }
     }
 
     interface ProxyInterface {
         fun build(entity: Entity2)
         fun build(arg: Int)
+        fun testMultiparameter(entity1: MyEntity1, entity2: MyEntity2)
     }
 
     private val myMappings by lazy {
-        mapOf<Class<*>, Class<*>>(Entity2::class.java to Entity1::class.java)
+        mapOf<Class<*>, Class<*>>(
+            Entity2::class.java to Entity1::class.java,
+            MyEntity1:: class.java to ApplicationEntity1::class.java,
+            MyEntity2::class.java to ApplicationEntity2::class.java
+        )
     }
 
     private val myMappingStrategy by lazy {
         object: MappingStrategy {
-            override fun onMapping(from: Any): Any? {
+            override fun onMapping(from: Any, expectedType: Class<*>): Any? {
                 return if(from is Entity2) {
                     Entity1(from.name)
-                } else null
+                } else if(from is MyEntity1) {
+                    ApplicationEntity1(from.name)
+                } else if(from is MyEntity2) {
+                    ApplicationEntity2(from.name)
+                }
+                else null
             }
         }
     }
@@ -60,5 +80,16 @@ class ExampleUnitTest {
             .setMappingStrategy(myMappingStrategy)
             .proxyBy(ProxyInterface::class.java)
         proxy.build(Entity2("testActor -> hello world"))
+    }
+
+    @Test
+    fun testMultiparameter() {
+        val proxy: ProxyInterface = Actor.of(ApplicationBean())
+                .setMapping(myMappings)
+                .setMappingStrategy(myMappingStrategy)
+                .proxyBy(ProxyInterface::class.java)
+        proxy.build(Entity2("Ddddd"))
+        proxy.testMultiparameter(MyEntity1("testActor -> hello world"), MyEntity2("arg2"))
+        proxy.build(Entity2("vvvvv"))
     }
 }

@@ -93,7 +93,7 @@ class Actor private constructor(private val obj: Any) {
                             .invoke(obj)
                 } else {
                     val variableArgs = args.map { it }.toTypedArray()
-                    findMethod(obj.javaClass, method.name, args.map { it::class.java }.toTypedArray(), variableArgs)?.invoke(obj, *variableArgs)
+                    findMethod(obj.javaClass, method.name, method.parameterTypes, variableArgs)?.invoke(obj, *variableArgs)
                 }
             }
         } as T
@@ -115,7 +115,12 @@ class Actor private constructor(private val obj: Any) {
             return clazz.getDeclaredMethod(name, *types)
         } catch (ex: NoSuchMethodException) {
             if (tryCount == 0) {
-                throw ex
+                if(clazz.superclass != null && clazz.superclass != java.lang.Object::class.java) {
+                    findMethod(clazz.superclass, name, types, args, types.size)
+                }
+                else {
+                    error("$obj -> $ex")
+                }
             } else {
                 replaceTypeToMap(types, args)
                 findMethod(clazz, name, types, args, tryCount - 1)
@@ -135,7 +140,7 @@ class Actor private constructor(private val obj: Any) {
                 val destClass: Class<*> = mappings[clazz] ?: TODO()
                 types[index] = destClass
                 mMappingStrategy?.also {
-                    val mappingStrategyResult = it.onMapping(args[index])
+                    val mappingStrategyResult = it.onMapping(args[index], destClass)
                     if(mappingStrategyResult != null) {
                         args[index] = mappingStrategyResult
                     }

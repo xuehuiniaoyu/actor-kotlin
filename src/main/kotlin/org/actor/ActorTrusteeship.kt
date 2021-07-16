@@ -15,7 +15,7 @@ open class ActorTrusteeship {
         return this
     }
 
-    fun join(target: Any, vararg interfaces: Class<*>): ActorTrusteeship {
+    fun <T: Any> join(target: T, vararg interfaces: Class<*>): ActorTrusteeship {
         return from(target).to(*interfaces)
     }
 
