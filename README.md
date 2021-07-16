@@ -1,5 +1,5 @@
 # actor-kotlin
-An open source dynamic proxy library 
+An open source dynamic proxy library \n
 to realize multi-module development without object injection
 
 
