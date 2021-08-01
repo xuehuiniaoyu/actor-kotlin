@@ -7,7 +7,6 @@ plugins {
 
 group 'io.github.xuehuiniaoyu'
 version '2.0'
-sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
@@ -30,82 +29,4 @@ compileTestKotlin {
     [compileJava]*.options*.encoding = 'UTF-8'
 }
 
-
-// publish
-
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier "sources"
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-// 最主要的是这里
-publishing {
-    publications {
-        // 这一个推送项目名称，mavenJava 相当于是一个 task name
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-            // 添加 pom 相关信息
-            // https://docs.gradle.org/current/dsl/org.gradle.api.publish.maven.MavenPublication.html
-            pom {
-                packaging 'jar'
-                name = "actor-kotlin"
-                description = "An open source dynamic proxy library that realizes interaction between multiple modules without code injection, which can be used as a distributed management framework."
-                url = "https://github.com/xuehuiniaoyu/actor-kotlin"
-                licenses {
-                    license {
-                        name = "The Apache License, Version 2.0"
-                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                    }
-                }
-                developers {
-                    // 添加开发者描述，这个id不知道是什么
-                    developer {
-                        id = "xuehuiniaoyu"
-                        name = "唐"
-                        email = "469490037@qq.com"
-                    }
-                }
-                // 添加你的 git 仓库 信息
-                scm {
-                    connection = "https://github.com/xuehuiniaoyu/actor-kotlin.git"
-                    developerConnection = "scm:git:https://github.com/xuehuiniaoyu/actor-kotlin.git"
-                    url = "https://github.com/xuehuiniaoyu/actor-kotlin"
-                }
-            }
-        }
-    }
-    repositories {
-        // 添加一个远程仓库地址
-        // releases 仓库
-        maven {
-            // 在对 task 中会生成对应的名称 publishMavenJavaPublicationToxxx
-            // 后面的 xxx 就是你这里的名称，表示你要把jar 上传到这个仓库中
-            name 'sonatypeRepository'  // 为你这个仓库起名
-            url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-            credentials {
-                username = "${NEXUS_USERNAME}"  // 之前在 sonatype 注册的账户名
-                password = "${NEXUS_PASSWORD}" // 对应的密码
-            }
-        }
-        // snapshots 仓库
-//        maven {
-//            name = 'sonatypeSnapshotRepository'
-//            url = 'https://oss.sonatype.org/content/repositories/snapshots/'
-//            credentials {
-//                username = "${NEXUS_USERNAME}"
-//                password = "${NEXUS_PASSWORD}"
-//            }
-//        }
-    }
-}
-signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign publishing.publications
-}
+apply from: './publish.gradle'
