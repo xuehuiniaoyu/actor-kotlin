@@ -46,7 +46,8 @@ class Actor constructor(private val base: Any) {
                     objClass.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.find { functionChecking ->
                         val functionEstablished = proxyInterface.kotlin.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.filterIndexed { _, proxyFunction ->
                             checkParametersEq(proxyFunction, functionChecking) { index ->
-                                needDynamicImplementationNodes[index] = Class.forName(functionChecking.parameters[index].type.javaType.typeName)
+                                val typeClass = (mClassLoader ?: Thread.currentThread().contextClassLoader).loadClass(functionChecking.parameters[index].type.javaType.typeName)
+                                needDynamicImplementationNodes[index] = typeClass
                             }
                         }
                         functionEstablished.isNotEmpty()
