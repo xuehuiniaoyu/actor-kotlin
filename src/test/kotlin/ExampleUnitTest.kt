@@ -1,6 +1,8 @@
 import org.junit.Test
 import xuehuiniaoyu.github.io.actor.Actor
 import xuehuiniaoyu.github.io.actor.ActorBean
+import xuehuiniaoyu.github.io.actor.ActorInterface
+import xuehuiniaoyu.github.io.actor.di.DynamicImplementation
 import xuehuiniaoyu.github.io.actor.field.GET
 import xuehuiniaoyu.github.io.actor.field.SET
 
@@ -79,5 +81,57 @@ class ExampleUnitTest {
         proxyEntity1.set("name", "hello world111")
         val value = proxyEntity1.get<Any>("name")
         println(value)
+    }
+
+
+
+    interface Interface1 {
+        fun log(log: String)
+    }
+
+    interface Interface2 {
+        fun log(log: Any)
+    }
+
+    class Kit {
+        fun call(key: String, interface1: Interface1) {
+            interface1.log("$key -------> hello world from call...")
+        }
+
+        fun call() {
+            println("hello world!")
+        }
+    }
+
+    interface KitProxy {
+        fun call(key: String, @DynamicImplementation data: Any)
+        fun call()
+    }
+
+    @Test
+    fun testActorInterface() {
+        val actorInterface = ActorInterface(object: Interface2 {
+            override fun log(log: Any) {
+                println("log: $log")
+            }
+        })
+        actorInterface.getImplement<Interface1> { impl ->
+            impl?.log("hello world!")
+        }
+        actorInterface.bindInterface(Interface1::class.java)
+        actorInterface.recovery()
+    }
+
+    @Test
+    fun testDynamicImplementation() {
+        val callback = object: Interface2 {
+            override fun log(log: Any) {
+                println("log: $log")
+            }
+        }
+
+        val proxy = Actor(Kit()).imitate(KitProxy::class.java)
+        proxy.call("hello", callback)
+        proxy.call()
     }
 }

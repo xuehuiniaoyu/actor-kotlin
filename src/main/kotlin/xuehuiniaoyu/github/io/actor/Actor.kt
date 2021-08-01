@@ -1,12 +1,16 @@
 package xuehuiniaoyu.github.io.actor
 
+import xuehuiniaoyu.github.io.actor.di.DynamicImplementation
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.*
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.functions
+import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.isSupertypeOf
+import kotlin.reflect.jvm.javaType
 
 /**
  * @author Tang
@@ -37,28 +41,41 @@ class Actor constructor(private val base: Any) {
         val mProxyInvocationHandler = object : InvocationHandler {
             override fun invoke(proxy: Any?, method: Method, args: Array<out Any>?): Any? {
                 val objClass = base::class
-                val function: KFunction<*>? = objClass.functions.filter { it.name == method?.name }.find { functionChecking ->
-                    val functionEstablished = proxyInterface.kotlin.functions.filterIndexed { index, proxyFunction ->
-                        if (functionChecking.parameters.count() == proxyFunction.parameters.count()) {
-                            // parameters[0] is obj
-                            if (functionChecking.parameters[0].type == objClass && index > 0)
-                                proxyFunction.parameters[index].type == functionChecking.parameters[index].type ||
-                                proxyFunction.parameters[index].type.isSupertypeOf(functionChecking.parameters[index].type)
-                            else true
-                        } else false
+                val needDynamicImplementationNodes = hashMapOf<Int, Class<*>>()
+                val function: KFunction<*>? =
+                    objClass.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.find { functionChecking ->
+                        val functionEstablished = proxyInterface.kotlin.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.filterIndexed { _, proxyFunction ->
+                            checkParametersEq(proxyFunction, functionChecking) { index ->
+                                needDynamicImplementationNodes[index] = Class.forName(functionChecking.parameters[index].type.javaType.typeName)
+                            }
+                        }
+                        functionEstablished.isNotEmpty()
                     }
-                    functionEstablished.isNotEmpty()
-                }
                 if (function == null) {
                     val methodName = method?.name
                     val methodParameters = method?.parameterTypes?.joinToString(", ")
-                    val error = NoSuchMethodError("$methodName($methodParameters)")
+                    val error = NoSuchMethodError("$objClass -> $methodName($methodParameters)")
                     throw error
                 } else {
-                    val data = LinkedList(args?.asList() ?: arrayListOf()).also {
-                        it.add(0, base)
-                    }.toTypedArray()
-                    return function?.call(*data)
+                    val data = LinkedList(args?.asList() ?: arrayListOf())
+                    data.add(0, base)
+                    needDynamicImplementationNodes.forEach { (key, value) ->
+                        if (value.isInterface) {
+                            val actorInterface = ActorInterface(data[key])
+                            actorInterface.getImplement<Any> { impl ->
+                                data[key] = impl
+                            }
+                            actorInterface.bindInterface(value)
+                            actorInterface.recovery()
+                        }
+                    }
+                    return try {
+                        function?.call(*data.toTypedArray())
+                    } catch (e: Exception) {
+                        val methodName = method?.name
+                        val methodParameters = method?.parameterTypes?.joinToString(", ")
+                        throw(IllegalArgumentException("$objClass -> $methodName($methodParameters) === You can consider using annotation @DynamicImplementation"))
+                    }
                 }
             }
         }
@@ -67,5 +84,26 @@ class Actor constructor(private val base: Any) {
             arrayOf(proxyInterface),
             mProxyInvocationHandler
         ) as T
+    }
+
+    private fun checkParametersEq(
+        fun1: KFunction<*>,
+        fun2: KFunction<*>,
+        isDynamicImplementationAlso: (Int) -> Unit
+    ): Boolean {
+        return if (fun1.parameters.count() == fun2.parameters.count()) {
+            val check1 = fun(index: Int, kParameter: KParameter) = kParameter.type == fun2.parameters[index].type
+            val check2 = fun(index: Int, kParameter: KParameter) = (kParameter.annotations.find { it is DynamicImplementation } != null).also { isDynamicImplementation ->
+                if (isDynamicImplementation) {
+                    isDynamicImplementationAlso(index)
+                }
+            }
+            val check3 = fun(index: Int, kParameter: KParameter) = kParameter.type.isSupertypeOf(fun2.parameters[index].type)
+            val check4 = fun(index: Int, kParameter: KParameter) = kParameter.type.isSubtypeOf(fun2.parameters[index].type)
+            val checkParams = fun1.parameters.filterIndexed { index, kParameter ->
+                check1(index, kParameter) || check2(index, kParameter) || check3(index, kParameter) || check4(index, kParameter)
+            }
+            checkParams.count() == fun1.parameters.count()-1
+        } else false
     }
 }
