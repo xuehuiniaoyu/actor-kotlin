@@ -12,7 +12,7 @@ class ActorInterface(private val impl: Any) {
     private var recycled = false
     fun bindInterface(`interface`: Class<*>) {
         mObservable.open()
-        mObservable.notifyObservers(Actor(impl).imitate(`interface`))
+        mObservable.notifyObservers(Actor(impl).imitator(`interface`))
     }
 
     fun <T: Any> getImplement(fn: (T?) -> Unit) {

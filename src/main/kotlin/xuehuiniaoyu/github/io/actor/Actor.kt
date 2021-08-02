@@ -37,7 +37,7 @@ class Actor constructor(private val base: Any) {
      * According to the interface, realizing the proxy of the real object,
      * Interface must contain methods of real objects
      */
-    fun <T : Any> imitate(proxyInterface: Class<T>): T {
+    fun <T : Any> imitator(proxyInterface: Class<T>): T {
         val mProxyInvocationHandler = object : InvocationHandler {
             override fun invoke(proxy: Any?, method: Method, args: Array<out Any>?): Any? {
                 val objClass = base::class
@@ -86,6 +86,8 @@ class Actor constructor(private val base: Any) {
             mProxyInvocationHandler
         ) as T
     }
+
+    fun <T : Any> mocker(proxyInterface: Class<T>) = imitator(proxyInterface)
 
     private fun checkParametersEq(
         fun1: KFunction<*>,

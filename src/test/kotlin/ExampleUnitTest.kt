@@ -41,7 +41,7 @@ class ExampleUnitTest {
     }
     @Test
     fun testActorTrusteeship() {
-        val proxy = Actor(ApplicationBean()).imitate(ProxyInterface::class.java)
+        val proxy = Actor(ApplicationBean()).imitator(ProxyInterface::class.java)
         proxy.build {
             val proxyObject = ActorBean(it).agent(ObjProperties::class.java)
             proxyObject.setName("哈哈")
@@ -130,7 +130,7 @@ class ExampleUnitTest {
             }
         }
 
-        val proxy = Actor(Kit()).imitate(KitProxy::class.java)
+        val proxy = Actor(Kit()).imitator(KitProxy::class.java)
         proxy.call("hello", callback)
         proxy.call()
     }
@@ -154,7 +154,7 @@ class ExampleUnitTest {
     }
     @Test
     fun testActor() {
-        val actor = Actor(ApiKit()).imitate(ApiKitProxy::class.java)
+        val actor = Actor(ApiKit()).imitator(ApiKitProxy::class.java)
         actor.call("hello key") {
             val proxy = ActorBean(it).agent(ApiResponseProxy::class.java)
             println(proxy.getData())
