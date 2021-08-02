@@ -6,5 +6,5 @@ Java动态伪装工具可以伪装成对象接口的接口副本，从而实现�
 
 Android Demo: 
 
-https://github.com/xuehuiniaoyu/actor-demo\n
+https://github.com/xuehuiniaoyu/actor-demo <br />
 https://github.com/xuehuiniaoyu/actor-demo-componentization
