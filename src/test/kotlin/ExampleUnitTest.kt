@@ -134,4 +134,30 @@ class ExampleUnitTest {
         proxy.call("hello", callback)
         proxy.call()
     }
+
+
+
+
+    data class ApiResponse(val data: String)
+    class ApiKit {
+        fun call(key: String, fn: (ApiResponse) -> Unit) {
+            fn(ApiResponse(key))
+        }
+    }
+    interface ApiKitProxy {
+        fun call(key: String, fn: (Any) -> Unit)
+    }
+
+    interface ApiResponseProxy {
+        @GET("data")
+        fun getData(): String
+    }
+    @Test
+    fun testActor() {
+        val actor = Actor(ApiKit()).imitate(ApiKitProxy::class.java)
+        actor.call("hello key") {
+            val proxy = ActorBean(it).agent(ApiResponseProxy::class.java)
+            println(proxy.getData())
+        }
+    }
 }

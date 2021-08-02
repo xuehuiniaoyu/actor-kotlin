@@ -99,10 +99,9 @@ class Actor constructor(private val base: Any) {
                     isDynamicImplementationAlso(index)
                 }
             }
-            val check3 = fun(index: Int, kParameter: KParameter) = kParameter.type.isSupertypeOf(fun2.parameters[index].type)
-            val check4 = fun(index: Int, kParameter: KParameter) = kParameter.type.isSubtypeOf(fun2.parameters[index].type)
+            val check3 = fun(index: Int, kParameter: KParameter) = kParameter.type.isSubtypeOf(fun2.parameters[index].type)
             val checkParams = fun1.parameters.filterIndexed { index, kParameter ->
-                check1(index, kParameter) || check2(index, kParameter) || check3(index, kParameter) || check4(index, kParameter)
+                check1(index, kParameter) || check2(index, kParameter)  || check3(index, kParameter)
             }
             checkParams.count() == fun1.parameters.count()-1
         } else false
