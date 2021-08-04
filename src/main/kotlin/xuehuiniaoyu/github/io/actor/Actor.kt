@@ -7,9 +7,9 @@ import java.lang.reflect.Proxy
 import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.isSupertypeOf
 import kotlin.reflect.jvm.javaType
 
 /**
@@ -43,8 +43,8 @@ class Actor constructor(private val base: Any) {
                 val objClass = base::class
                 val needDynamicImplementationNodes = hashMapOf<Int, Class<*>>()
                 val function: KFunction<*>? =
-                    objClass.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.find { functionChecking ->
-                        val functionEstablished = proxyInterface.kotlin.functions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.filterIndexed { _, proxyFunction ->
+                    objClass.declaredMemberFunctions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.find { functionChecking ->
+                        val functionEstablished = proxyInterface.kotlin.declaredMemberFunctions.filter { it.name == method?.name && it.parameters.count()-1 == args?.count() ?: 0 }.filterIndexed { _, proxyFunction ->
                             checkParametersEq(proxyFunction, functionChecking) { index ->
                                 val typeClass = (mClassLoader ?: Thread.currentThread().contextClassLoader).loadClass(functionChecking.parameters[index].type.javaType.typeName)
                                 needDynamicImplementationNodes[index] = typeClass
@@ -55,7 +55,11 @@ class Actor constructor(private val base: Any) {
                 if (function == null) {
                     val methodName = method?.name
                     val methodParameters = method?.parameterTypes?.joinToString(", ")
-                    val error = NoSuchMethodError("$objClass -> $methodName($methodParameters)")
+                    val suggestDynamicImplementation = if(method?.parameterTypes.find { it.isInterface } != null)
+                        " === You can consider using annotation @DynamicImplementation"
+                    else ""
+                    val error =
+                        NoSuchMethodError("$objClass -> $methodName($methodParameters)$suggestDynamicImplementation")
                     throw error
                 } else {
                     val data = LinkedList(args?.asList() ?: arrayListOf())
@@ -73,9 +77,7 @@ class Actor constructor(private val base: Any) {
                     return try {
                         function?.call(*data.toTypedArray())
                     } catch (e: Exception) {
-                        val methodName = method?.name
-                        val methodParameters = method?.parameterTypes?.joinToString(", ")
-                        throw(IllegalArgumentException("$objClass -> $methodName($methodParameters) === You can consider using annotation @DynamicImplementation"))
+                        throw e
                     }
                 }
             }

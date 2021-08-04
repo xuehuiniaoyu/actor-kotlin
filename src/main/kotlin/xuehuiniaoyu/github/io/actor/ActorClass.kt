@@ -3,23 +3,23 @@ package xuehuiniaoyu.github.io.actor
 import xuehuiniaoyu.github.io.actor.field.GET
 import xuehuiniaoyu.github.io.actor.field.SET
 import java.lang.reflect.Proxy
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.*
 
-class ActorBean(private val instance: Any) {
-    private val clazz = instance::class
+class ActorClass(private val clazz: KClass<*>) {
     fun <T: Any> get(name: String): T? {
         return try {
             clazz.java.getDeclaredField(name).let {
                 it.isAccessible = true
-                it.get(instance) as? T
+                it.get(clazz) as? T
             }
         } catch (e: NoSuchFieldException) {
-            var field = clazz.declaredMemberProperties.find { it.name == name }
+            var field = clazz.companionObject?.declaredMemberProperties?.find { it.name == name }
                 ?.let { it as KProperty1<Any, Any?> }
                 ?: throw e
-            field.get(instance) as? T
+            field.get(clazz.companionObjectInstance!!) as? T
         }
     }
 
@@ -27,13 +27,13 @@ class ActorBean(private val instance: Any) {
         try {
             clazz.java.getDeclaredField(name).let {
                 it.isAccessible = true
-                it.set(instance, value)
+                it.set(clazz, value)
             }
         } catch (e: NoSuchFieldException) {
-            val field = clazz.declaredMemberProperties.find { it.name == name }
+            val field = clazz.companionObject?.declaredMemberProperties?.find { it.name == name }
                 ?.let { it as KMutableProperty1<Any, Any?> }
                 ?: throw e
-            field.set(instance, value)
+            field.set(clazz.companionObjectInstance!!, value)
         }
     }
 

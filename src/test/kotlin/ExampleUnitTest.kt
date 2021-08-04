@@ -1,6 +1,7 @@
 import org.junit.Test
 import xuehuiniaoyu.github.io.actor.Actor
 import xuehuiniaoyu.github.io.actor.ActorBean
+import xuehuiniaoyu.github.io.actor.ActorClass
 import xuehuiniaoyu.github.io.actor.ActorInterface
 import xuehuiniaoyu.github.io.actor.di.DynamicImplementation
 import xuehuiniaoyu.github.io.actor.field.GET
@@ -159,5 +160,37 @@ class ExampleUnitTest {
             val proxy = ActorBean(it).agent(ApiResponseProxy::class.java)
             println(proxy.getData())
         }
+    }
+
+    class A {
+        val name: String by lazy {
+            "123"
+        }
+    }
+
+    @Test
+    fun testActorBean() {
+        val name = ActorBean(A()).get<Any>("name")
+        println(name)
+    }
+
+    class People {
+        companion object {
+            var name: String = ""
+        }
+    }
+
+    interface PeopleProxy {
+        @GET("name")
+        fun getName(): String
+
+        @SET("name")
+        fun setName(name: String)
+    }
+    @Test
+    fun testActorClass() {
+        val c = ActorClass(People::class).agent(PeopleProxy::class.java)
+        c.setName("张三")
+        println(c.getName())
     }
 }
