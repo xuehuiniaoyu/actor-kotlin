@@ -22,8 +22,13 @@ interface C {
 ```
 B 和 C 都是 A 的伪装者接口
 ```
+```
+val object = A()
+val proxy = Actor(object).imitator(B::class.java)
+proxy.call("hello world!")
+```
 
-纯Kotlin开发，使用简单但功能强大，可用于组件化开发或插件化项目开发。
+纯Kotlin开发，使用简单但功能强大。
 
 Android Demo: <br />
 https://github.com/xuehuiniaoyu/actor-demo <br />
